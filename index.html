@@ -1,0 +1,109 @@
+<!--
+http = require('http'),
+    fs = require('fs'),
+    qs = require('querystring');
+
+http.createServer(function (req, res) {
+    var someFile = "index.html";
+
+    if (req.method === 'POST') {
+        var body = '';
+        req.on('data', function (data) {
+            body += data;
+        });
+        req.on('end', function () {
+            var poststr = JSON.stringify(qs.parse(body));
+            fs.readFile(someFile, 'utf8', function (err, data) {
+                if (err) return console.log(err);
+                var processed = data.replace(/var data = {[^}]*};/g, 'var data = ' + poststr + ';');
+                fs.writeFile(someFile, processed, 'utf8', function (err) {
+                    if (err) return console.log(err);
+                    res.write("{status: 'ok'}");
+                    res.end();
+                });
+            });
+        });
+    } else {
+        fs.readFile(someFile, 'utf8', function (err, data) {
+            res.write(data);
+            res.end();
+        });
+    }
+}).listen(1337, "127.0.0.1");
+console.log("http://localhost:1337/");
+/*
+-->
+
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>1File CMS</title>
+	<script>var data = {"posts[]":[]};</script>
+	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script>
+	function reload(){
+		$("#posts").html("");
+		data["posts[]"].forEach(function(item){
+			$("#posts").prepend("<pre>" + item + "</pre>");
+		});
+	}
+	$(function(){
+		$("#send").click(function(){
+			var text = $("#contents").val();
+			data["posts[]"].push(text);
+			$.post("http://localhost:1337/", data, function(){
+				reload();
+			});
+		});
+		reload();
+		if (document.location.hostname == "localhost"){
+			$("#editor").show();
+		}
+	});
+	</script>
+	<style>
+		body{
+			background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHUlEQVQIW2NkwAIY8Qq+fnz5v6isLlgRfpXIxgAA0iQEBsbFbSsAAAAASUVORK5CYII=);
+		}
+		.container{
+			width: 900px;
+		}
+		textarea{
+			margin: 20px;
+			width: 96%;
+		}
+		button{
+			font-size: 2rem;
+			margin-left:20px;
+		}
+		#posts > pre{
+			background: white;
+			margin: 20px;
+			padding: 20px;
+			border-radius:3px;
+			-webkit-border-radius:3px;
+			-moz-border-radius:3px;
+			box-shadow:rgba(153, 153, 153, 0.65098) 0px 1px 3px 1px;
+			-webkit-box-shadow:rgba(153, 153, 153, 0.65098) 0px 1px 3px 1px;
+			-moz-box-shadow:rgba(153, 153, 153, 0.65098) 0px 1px 3px 1px;
+		}
+		#editor{
+			display: none;
+		}
+	</style>
+</head>
+<body>
+<div class="container">
+	<h1>1File CMS</h1>
+	<div id="editor">
+		<textarea id="contents" rows="20"></textarea><br>
+		<button id="send">Send</button>
+	</div>
+	<div id="posts">
+	</div>
+</div>
+</body>
+</html>
+<!--
+*/
+-->
